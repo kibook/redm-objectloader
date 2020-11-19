@@ -296,18 +296,22 @@ function ToBoolean(value)
 	return value == 'true'
 end
 
+function ToFloat(value)
+	return tonumber(value) + 0.0
+end
+
 local AttributeTypes = {
 	['Collision'] = ToBoolean,
 	['Dynamic'] = ToBoolean,
 	['Hash'] = ToNumber,
 	['LOD'] = ToNumber,
-	['Position_x'] = ToNumber,
-	['Position_y'] = ToNumber,
-	['Position_z'] = ToNumber,
+	['Position_x'] = ToFloat,
+	['Position_y'] = ToFloat,
+	['Position_z'] = ToFloat,
 	['Preset'] = ToNumber,
-	['Rotation_x'] = ToNumber,
-	['Rotation_y'] = ToNumber,
-	['Rotation_z'] = ToNumber,
+	['Rotation_x'] = ToFloat,
+	['Rotation_y'] = ToFloat,
+	['Rotation_z'] = ToFloat,
 	['TextureVariation'] = ToNumber
 }
 
