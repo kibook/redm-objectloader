@@ -1,3 +1,4 @@
 Config = {}
 
-Config.SpawnDistance = 400
+Config.SpawnDistance = 200
+Config.MapLoadTimeout = 10000

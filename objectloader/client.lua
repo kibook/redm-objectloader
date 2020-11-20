@@ -8,7 +8,7 @@ function GetDistance(object, myPos)
 		object.Position_x,
 		object.Position_y,
 		object.Position_z,
-		false)
+		true)
 end
 
 function IsNearby(object, myPos)
@@ -27,44 +27,26 @@ function values(t)
 	end
 end
 
-function GetMapLoader(map)
-	return function()
-		map.models = {}
-		for object in values(map.Object) do
-			table.insert(map.models, object.Hash)
-		end
-		for pickup in values(map.PickupObject) do
-			table.insert(map.models, pickup.ModelHash)
-		end
-		for ped in values(map.Ped) do
-			table.insert(map.models, ped.Hash)
-		end
-		for vehicle in values(map.Vehicle) do
-			table.insert(map.models, vehicle.Hash)
-		end
+function LoadModel(model)
+	if IsModelInCdimage(model) then
+		RequestModel(model)
 
-		for model in values(map.models) do
-			RequestModel(model)
-		end
-
-		local loaded = false
-
-		while not loaded do
-			loaded = true
-
+		while not HasModelLoaded(model) do
 			Wait(0)
-
-			for model in values(map.models) do
-				if not HasModelLoaded(model) then
-					loaded = false
-					break
-				end
-			end
 		end
+
+		return true
+	else
+		print('Error: Model does not exist: ' .. model)
+		return false
 	end
 end
 
 function SpawnObject(object)
+	if not LoadModel(object.Hash) then
+		return
+	end
+
 	object.handle = CreateObjectNoOffset(
 		object.Hash,
 		object.Position_x,
@@ -75,8 +57,9 @@ function SpawnObject(object)
 		object.Dynamic,
 		false)
 
+	SetModelAsNoLongerNeeded(object.Hash)
+
 	SetEntityRotation(object.handle, object.Rotation_x, object.Rotation_y, object.Rotation_z, 0, false)
-	--FreezeEntityPosition(object.handle, true)
 
 	if object.LOD then
 		SetEntityLodDist(object.handle, object.LOD)
@@ -105,16 +88,22 @@ function SetRandomOutfitVariation(ped, p1)
 end
 
 function SpawnPed(ped)
+	if not LoadModel(ped.Hash) then
+		return
+	end
+
 	ped.handle = CreatePed(
 		ped.Hash,
 		ped.Position_x,
 		ped.Position_y,
 		ped.Position_z,
-		0,
+		0.0,
 		false, -- isNetwork
 		false, -- netMissionEntity
 		false,
 		false)
+
+	SetModelAsNoLongerNeeded(ped.Hash)
 
 	SetEntityRotation(ped.handle, ped.Rotation_x, ped.Rotation_y, ped.Rotation_z, 0, false)
 
@@ -141,17 +130,23 @@ function ClearPed(ped)
 end
 
 function SpawnVehicle(vehicle)
+	if not LoadModel(vehicle.Hash) then
+		return
+	end
+
 	vehicle.handle = CreateVehicle(
 		vehicle.Hash,
 		vehicle.Position_x,
 		vehicle.Position_y,
 		vehicle.Position_z,
-		0,
+		0.0,
 		false, -- isNetwork
 		false, -- netMissionEntity
 		false,
 		false)
-	
+
+	SetModelAsNoLongerNeeded(vehicle.Hash)
+
 	SetEntityRotation(vehicle.handle, vehicle.Rotation_x, vehicle.Rotation_y, vehicle.Rotation_z, 0, false)
 end
 
@@ -163,6 +158,10 @@ function ClearVehicle(vehicle)
 end
 
 function SpawnPickup(pickup)
+	if not LoadModel(pickup.ModelHash) then
+		return
+	end
+
 	pickup.handle = CreatePickup(
 		pickup.PickupHash,
 		pickup.Position_x,
@@ -175,6 +174,8 @@ function SpawnPickup(pickup)
 		0,
 		0.0,
 		0)
+
+	SetModelAsNoLongerNeeded(pickup.ModelHash)
 end
 
 function ClearPickup(pickup)
@@ -224,18 +225,6 @@ function UpdateMap(map)
 	end
 end
 
-function UpdateMaps()
-	for name, map in pairs(Maps) do
-		UpdateMap(map)
-	end
-end
-
-function UnloadModels(map)
-	for model in values(map.models) do
-		SetModelAsNoLongerNeeded(model)
-	end
-end
-
 function ClearMap(map)
 	for object in values(map.Object) do
 		ClearObject(object)
@@ -254,7 +243,27 @@ function ClearMap(map)
 	end
 end
 
-function AddMap(name, map)
+function CreateMapThread(name)
+	CreateThread(function()
+		Maps[name].enabled = true
+		Maps[name].unloaded = false
+
+		while Maps[name].enabled do
+			Maps[name].lastUpdated = GetSystemTime()
+			UpdateMap(Maps[name])
+			Wait(0)
+		end
+
+		ClearMap(Maps[name])
+		Maps[name].unloaded = true
+	end)
+end
+
+function InitMap(name, map)
+	if Maps[name] then
+		RemoveMap(name)
+	end
+
 	Maps[name] = map
 
 	if map.MapMeta and map.MapMeta[1].Creator then
@@ -263,28 +272,22 @@ function AddMap(name, map)
 		print('Added map ' .. name)
 	end
 
-	CreateThread(GetMapLoader(map))
+	CreateMapThread(name)
 end
 
 function RemoveMap(name)
 	if Maps[name] then
-		ClearMap(Maps[name])
-		UnloadModels(Maps[name])
+		Maps[name].enabled = false
+
+		while not Maps[name].unloaded do
+			Wait(0)
+		end
+
 		Maps[name] = nil
-	end
 
-	print('Removed map ' .. name)
-end
-
-function RemoveAllMaps()
-	for name, map in pairs(Maps) do
-		RemoveMap(name)
-	end
-end
-
-function ClearMaps()
-	for name, map in pairs(Maps) do
-		ClearMap(Maps[name])
+		print('Removed map ' .. name)
+	else
+		print('No map named ' .. name .. ' loaded')
 	end
 end
 
@@ -333,7 +336,7 @@ function ProcessNode(node)
 	return entity
 end
 
-function AddXmlMap(name, data)
+function AddMap(name, data)
 	local xml = SLAXML:dom(data)
 	local map = {}
 
@@ -346,59 +349,117 @@ function AddXmlMap(name, data)
 		end
 	end
 
-	AddMap(name, map)
+	InitMap(name, map)
+end
+
+local entityEnumerator = {
+	__gc = function(enum)
+		if enum.destructor and enum.handle then
+			enum.destructor(enum.handle)
+		end
+		enum.destructor = nil
+		enum.handle = nil
+	end
+}
+
+function EnumerateEntities(firstFunc, nextFunc, endFunc)
+	return coroutine.wrap(function()
+		local iter, id = firstFunc()
+
+		if not id or id == 0 then
+			endFunc(iter)
+			return
+		end
+
+		local enum = {handle = iter, destructor = endFunc}
+		setmetatable(enum, entityEnumerator)
+
+		local next = true
+		repeat
+			coroutine.yield(id)
+			next, id = nextFunc(iter)
+		until not next
+
+		enum.destructor, enum.handle = nil, nil
+		endFunc(iter)
+	end)
+end
+
+function EnumerateObjects()
+	return EnumerateEntities(FindFirstObject, FindNextObject, EndFindObject)
+end
+
+function EnumeratePeds()
+	return EnumerateEntities(FindFirstPed, FindNextPed, EndFindPed)
+end
+
+function EnumerateVehicles()
+	return EnumerateEntities(FindFirstVehicle, FindNextVehicle, EndFindVehicle)
+end
+
+function ClearEntities()
+	for ped in EnumeratePeds() do
+		if not NetworkGetEntityIsNetworked(ped) then
+			DeletePed(ped)
+		end
+	end
+
+	for vehicle in EnumerateVehicles() do
+		if not NetworkGetEntityIsNetworked(vehicle) then
+			DeleteVehicle(vehicle)
+		end
+	end
+
+	for object in EnumerateObjects() do
+		if not NetworkGetEntityIsNetworked(object) then
+			DeleteObject(object)
+		end
+	end
 end
 
 AddEventHandler('onClientResourceStart', function(resourceName)
-	local numMaps = GetNumResourceMetadata(resourceName, 'objectloader_map')
-
-	if not numMaps then
-		return
-	end
-
-	for i = 0, numMaps - 1 do
-		local fileName = GetResourceMetadata(resourceName, 'objectloader_map', i)
-		local data = LoadResourceFile(resourceName, fileName)
-		AddXmlMap(resourceName, data)
-	end
-end)
-
-AddEventHandler('onClientResourceStop', function(resourceName)
 	if GetCurrentResourceName() == resourceName then
-		RemoveAllMaps()
-	elseif Maps[resourceName] then
-		RemoveMap(resourceName)
+		ClearEntities()
+	else
+		local numMaps = GetNumResourceMetadata(resourceName, 'objectloader_map')
+
+		if not numMaps then
+			return
+		end
+
+		for i = 0, numMaps - 1 do
+			local fileName = GetResourceMetadata(resourceName, 'objectloader_map', i)
+			local data = LoadResourceFile(resourceName, fileName)
+			AddMap(resourceName, data)
+		end
 	end
 end)
 
-local MainThreadTicks = 0
-local SideThreadTicks = 0
+AddEventHandler('onResourceStop', function(resourceName)
+	if GetCurrentResourceName() == resourceName then
+		ClearEntities()
+	elseif Maps[resourceName] then
+			RemoveMap(resourceName)
+	end
+end)
 
-function StartThread()
-	CreateThread(function()
-		while true do
-			Wait(500)
+function HasMapFailed(name)
+	return Maps[name] and Maps[name].lastUpdated and GetSystemTime() - Maps[name].lastUpdated > Config.MapLoadTimeout
+end
 
-			MainThreadTicks = MainThreadTicks + 1
-
-			UpdateMaps()
+function CheckMaps()
+	for name, map in pairs(Maps) do
+		if HasMapFailed(name) then
+			print('Restarting map ' .. name .. '...')
+			ClearEntities()
+			CreateMapThread(name)
 		end
-	end)
+	end
 end
 
 CreateThread(function()
 	while true do
-		Wait(500)
-
-		SideThreadTicks = SideThreadTicks + 1
-
-		if SideThreadTicks - MainThreadTicks > 10 then
-			MainThreadTicks = 0
-			SideThreadTicks = 0
-			print('Restarting thread')
-			StartThread()
-		end
+		Wait(0)
+		CheckMaps()
 	end
 end)
-
-StartThread()

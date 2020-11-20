@@ -10,6 +10,5 @@ client_scripts {
 
 exports {
 	'AddMap',
-	'AddXmlMap',
 	'RemoveMap'
 }
