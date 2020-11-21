@@ -248,7 +248,7 @@ function CreateMapThread(name)
 		Maps[name].enabled = true
 		Maps[name].unloaded = false
 
-		while Maps[name].enabled do
+		while Maps[name] and Maps[name].enabled do
 			Maps[name].lastUpdated = GetSystemTime()
 			UpdateMap(Maps[name])
 			Wait(0)
@@ -439,7 +439,7 @@ AddEventHandler('onResourceStop', function(resourceName)
 	if GetCurrentResourceName() == resourceName then
 		ClearEntities()
 	elseif Maps[resourceName] then
-			RemoveMap(resourceName)
+		RemoveMap(resourceName)
 	end
 end)
 
