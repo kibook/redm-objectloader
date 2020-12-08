@@ -59,6 +59,8 @@ function SpawnObject(object)
 
 	SetModelAsNoLongerNeeded(object.Hash)
 
+	FreezeEntityPosition(object.handle, true)
+
 	SetEntityRotation(object.handle, object.Rotation_x, object.Rotation_y, object.Rotation_z, 0, false)
 
 	if object.LOD then
@@ -105,6 +107,8 @@ function SpawnPed(ped)
 
 	SetModelAsNoLongerNeeded(ped.Hash)
 
+	FreezeEntityPosition(ped.handle, true)
+
 	SetEntityRotation(ped.handle, ped.Rotation_x, ped.Rotation_y, ped.Rotation_z, 0, false)
 
 	if not ped.Preset or ped.Preset == -1 then
@@ -146,6 +150,8 @@ function SpawnVehicle(vehicle)
 		false)
 
 	SetModelAsNoLongerNeeded(vehicle.Hash)
+
+	FreezeEntityPosition(vehicle.handle, true)
 
 	SetEntityRotation(vehicle.handle, vehicle.Rotation_x, vehicle.Rotation_y, vehicle.Rotation_z, 0, false)
 end
