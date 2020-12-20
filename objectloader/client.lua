@@ -78,7 +78,7 @@ function ClearObject(object)
 end
 
 function RemoveDeletedObject(object)
-	local handle = GetClosestObjectOfType(object.Position_x, object.Position_y, object.Position_z, 1, object.Hash, false, false, false)
+	local handle = GetClosestObjectOfType(object.Position_x, object.Position_y, object.Position_z, 1.0, object.Hash, false, false, false)
 
 	if handle ~= 0 then
 		DeleteObject(handle)
