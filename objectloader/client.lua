@@ -1,14 +1,7 @@
 local Maps = {}
 
 function GetDistance(object, myPos)
-	return GetDistanceBetweenCoords(
-		myPos.x,
-		myPos.y,
-		myPos.z,
-		object.Position_x,
-		object.Position_y,
-		object.Position_z,
-		true)
+	return #(myPos - vector3(object.Position_x, object.Position_y, object.Position_z))
 end
 
 function IsNearby(object, myPos)
