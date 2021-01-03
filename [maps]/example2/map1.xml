@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<Map>
+  <MapMeta Creator="Poodle"/>
+  <Object Hash="-1230458423" Position_x="-2124.8493652344" Position_y="-3399.4055175781" Position_z="32.187232971191" Rotation_x="0.0" Rotation_Y="0.0" Rotation_z="-126.91316986084"/>
+  <Object Hash="-27302281" Position_x="-2123.9614257812" Position_y="-3397.8356933594" Position_z="32.069374084473" Rotation_x="0.0" Rotation_Y="0.0" Rotation_z="68.085639953613"/>
+  <Object Hash="1050043779" Position_x="-2130.6918945312" Position_y="-3398.443359375" Position_z="32.069103240967" Rotation_x="-21.999973297119" Rotation_Y="0.0" Rotation_z="40.085605621338"/>
+  <Object Hash="-2069977106" Position_x="-2130.0981445312" Position_y="-3400.7849121094" Position_z="32.231201171875" Rotation_x="0.0" Rotation_Y="0.0" Rotation_z="150.08616638184"/>
+  <Object Hash="1935100224" Position_x="-2124.7497558594" Position_y="-3397.4018554688" Position_z="32.071712493896" Rotation_x="0.0" Rotation_Y="0.0" Rotation_z="92.379508972168"/>
+  <Object Hash="-965956337" Position_x="-2125.3818359375" Position_y="-3396.0803222656" Position_z="32.086223602295" Rotation_x="0.0" Rotation_Y="0.0" Rotation_z="-175.04513549805"/>
+  <Object Hash="-1296005897" Position_x="-2125.212890625" Position_y="-3398.7062988281" Position_z="32.109508514404" Rotation_x="0.0" Rotation_Y="0.0" Rotation_z="-87.620506286621"/>
+  <Object Hash="-1179266405" Position_x="-2128.3188476562" Position_y="-3398.8293457031" Position_z="32.072620391846" Rotation_x="0.0" Rotation_Y="0.0" Rotation_z="68.085639953613"/>
+  <Object Hash="-65172933" Position_x="-2124.0666503906" Position_y="-3397.3129882812" Position_z="32.071090698242" Rotation_x="0.0" Rotation_Y="0.0" Rotation_z="-43.914283752441"/>
+  <Object Hash="-1687989449" Position_x="-2129.9838867188" Position_y="-3397.333984375" Position_z="32.130283355713" Rotation_x="0.0" Rotation_Y="0.0" Rotation_z="38.086395263672"/>
+  <Object Hash="986744376" Position_x="-2129.0942382812" Position_y="-3400.8425292969" Position_z="32.06916809082" Rotation_x="0.0" Rotation_Y="0.0" Rotation_z="140.08618164062"/>
+</Map>

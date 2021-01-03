@@ -335,20 +335,27 @@ function ProcessNode(node)
 	return entity
 end
 
-function AddMap(name, data)
-	local xml = SLAXML:dom(data)
+function AddMaps(name, dataList)
 	local map = {}
 
-	for kid in values(xml.root.kids) do
-		if kid.type == 'element' then
-			if not map[kid.name] then
-				map[kid.name] = {}
+	for _, data in ipairs(dataList) do
+		local xml = SLAXML:dom(data)
+
+		for kid in values(xml.root.kids) do
+			if kid.type == 'element' then
+				if not map[kid.name] then
+					map[kid.name] = {}
+				end
+				table.insert(map[kid.name], ProcessNode(kid))
 			end
-			table.insert(map[kid.name], ProcessNode(kid))
 		end
 	end
 
 	InitMap(name, map)
+end
+
+function AddMap(name, data)
+	AddMaps(name, {data})
 end
 
 local entityEnumerator = {
@@ -426,11 +433,15 @@ AddEventHandler('onClientResourceStart', function(resourceName)
 			return
 		end
 
+		local dataList = {}
+
 		for i = 0, numMaps - 1 do
 			local fileName = GetResourceMetadata(resourceName, 'objectloader_map', i)
 			local data = LoadResourceFile(resourceName, fileName)
-			AddMap(resourceName, data)
+			table.insert(dataList, data)
 		end
+
+		AddMaps(resourceName, dataList)
 	end
 end)
 
