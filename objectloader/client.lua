@@ -429,7 +429,7 @@ AddEventHandler('onClientResourceStart', function(resourceName)
 	else
 		local numMaps = GetNumResourceMetadata(resourceName, 'objectloader_map')
 
-		if not numMaps then
+		if not numMaps or numMaps < 1 then
 			return
 		end
 
