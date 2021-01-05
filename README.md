@@ -30,6 +30,20 @@ You do not need to add `ensure objectloader` to `server.cfg`. Each map should in
    
 3. Create a resource manifest (`fxmanifest.lua`), and enter the following inside it:
 
+   For a single map editor XML file:
+   ```
+   fx_version 'adamant'
+   game 'rdr3'
+   rdr3_warning 'I acknowledge that this is a prerelease build of RedM, and I am aware my resources *will* become incompatible once RedM ships.'
+   
+   dependency 'objectloader'
+   
+   file 'mymap.xml'
+   
+   objectloader_map 'mymap.xml'
+   ```
+   
+   For multiple map editor XML files:
    ```
    fx_version 'adamant'
    game 'rdr3'
@@ -38,10 +52,14 @@ You do not need to add `ensure objectloader` to `server.cfg`. Each map should in
    dependency 'objectloader'
    
    files {
-       'mymap.xml'
+      'mymap1.xml',
+      'mymap2.xml'
    }
    
-   objectloader_map 'mymap.xml'
+   objectloader_maps {
+      'mymap1.xml',
+      'mymap2.xml'
+   }
    ```
    
 4. Add `ensure mymap` inside `server.cfg`.
