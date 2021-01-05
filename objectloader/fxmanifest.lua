@@ -7,8 +7,3 @@ client_scripts {
 	'slaxml.lua',
 	'client.lua'
 }
-
-exports {
-	'AddMap',
-	'RemoveMap'
-}

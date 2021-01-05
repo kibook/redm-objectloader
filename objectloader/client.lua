@@ -467,6 +467,9 @@ function CheckMaps()
 	end
 end
 
+exports('addMap', AddMap)
+exports('removeMap', RemoveMap)
+
 CreateThread(function()
 	while true do
 		Wait(0)
