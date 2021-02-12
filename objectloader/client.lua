@@ -250,7 +250,7 @@ function CreateMapThread(name)
 		while Maps[name] and Maps[name].enabled do
 			Maps[name].lastUpdated = GetSystemTime()
 			UpdateMap(Maps[name])
-			Wait(0)
+			Wait(500)
 		end
 
 		ClearMap(Maps[name])
@@ -278,7 +278,7 @@ function RemoveMap(name)
 	if Maps[name] then
 		Maps[name].enabled = false
 
-		while not Maps[name].unloaded do
+		while Maps[name] and not Maps[name].unloaded do
 			Wait(0)
 		end
 
