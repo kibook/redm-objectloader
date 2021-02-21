@@ -1,5 +1,7 @@
 local Maps = {}
 
+local TotalEntities = 0
+
 function GetDistance(object, myPos)
 	return #(myPos - vector3(object.Position_x, object.Position_y, object.Position_z))
 end
@@ -37,7 +39,7 @@ end
 
 function SpawnObject(object)
 	if not LoadModel(object.Hash) then
-		return
+		return false
 	end
 
 	object.handle = CreateObjectNoOffset(
@@ -52,6 +54,10 @@ function SpawnObject(object)
 
 	SetModelAsNoLongerNeeded(object.Hash)
 
+	if object.handle == 0 then
+		return false
+	end
+
 	FreezeEntityPosition(object.handle, true)
 
 	SetEntityRotation(object.handle, object.Rotation_x, object.Rotation_y, object.Rotation_z, 0, false)
@@ -61,13 +67,13 @@ function SpawnObject(object)
 	else
 		SetEntityLodDist(object.handle, 0xFFFF)
 	end
+
+	return true
 end
 
 function ClearObject(object)
-	if object.handle then
-		DeleteObject(object.handle)
-		object.handle = nil
-	end
+	DeleteObject(object.handle)
+	object.handle = nil
 end
 
 function RemoveDeletedObject(object)
@@ -84,7 +90,7 @@ end
 
 function SpawnPed(ped)
 	if not LoadModel(ped.Hash) then
-		return
+		return false
 	end
 
 	ped.handle = CreatePed(
@@ -99,6 +105,10 @@ function SpawnPed(ped)
 		false)
 
 	SetModelAsNoLongerNeeded(ped.Hash)
+
+	if ped.handle == 0 then
+		return false
+	end
 
 	FreezeEntityPosition(ped.handle, true)
 
@@ -117,18 +127,18 @@ function SpawnPed(ped)
 	if ped.Scenario then
 		TaskStartScenarioInPlace(ped.handle, GetHashKey(ped.Scenario), 0, true)
 	end
+
+	return true
 end
 
 function ClearPed(ped)
-	if ped.handle then
-		DeletePed(ped.handle)
-		ped.handle = nil
-	end
+	DeletePed(ped.handle)
+	ped.handle = nil
 end
 
 function SpawnVehicle(vehicle)
 	if not LoadModel(vehicle.Hash) then
-		return
+		return false
 	end
 
 	vehicle.handle = CreateVehicle(
@@ -144,21 +154,25 @@ function SpawnVehicle(vehicle)
 
 	SetModelAsNoLongerNeeded(vehicle.Hash)
 
+	if vehicle.handle == 0 then
+		return false
+	end
+
 	FreezeEntityPosition(vehicle.handle, true)
 
 	SetEntityRotation(vehicle.handle, vehicle.Rotation_x, vehicle.Rotation_y, vehicle.Rotation_z, 0, false)
+
+	return true
 end
 
 function ClearVehicle(vehicle)
-	if vehicle.handle then
-		DeleteVehicle(vehicle.handle)
-		vehicle.handle = nil
-	end
+	DeleteVehicle(vehicle.handle)
+	vehicle.handle = nil
 end
 
 function SpawnPickup(pickup)
 	if not LoadModel(pickup.ModelHash) then
-		return
+		return false
 	end
 
 	pickup.handle = CreatePickup(
@@ -175,13 +189,17 @@ function SpawnPickup(pickup)
 		0)
 
 	SetModelAsNoLongerNeeded(pickup.ModelHash)
+
+	if pickup.handle == 0 then
+		return false
+	end
+
+	return true
 end
 
 function ClearPickup(pickup)
-	if pickup.handle then
-		DeleteEntity(pickup.handle)
-		pickup.handle = nil
-	end
+	DeleteEntity(pickup.handle)
+	pickup.handle = nil
 end
 
 function UpdateEntity(entity, myPos, spawnFunc, clearFunc)
@@ -192,9 +210,17 @@ function UpdateEntity(entity, myPos, spawnFunc, clearFunc)
 	local nearby = IsNearby(entity, myPos)
 
 	if nearby and not entity.handle then
-		spawnFunc(entity)
+		if TotalEntities < Config.MaxEntities then
+			if spawnFunc(entity) then
+				TotalEntities = TotalEntities + 1
+			end
+		end
 	elseif not nearby and entity.handle then
 		clearFunc(entity)
+
+		if TotalEntities > 0 then
+			TotalEntities = TotalEntities - 1
+		end
 	end
 end
 
@@ -283,6 +309,10 @@ function RemoveMap(name)
 		end
 
 		Maps[name] = nil
+
+		-- FIXME: Should only subtract the # of entities for this map,
+		--        but currently not sure how to track this
+		TotalEntities = 0
 
 		print('Removed map ' .. name)
 	else
@@ -421,6 +451,8 @@ function ClearEntities()
 			DeleteObject(object)
 		end
 	end
+
+	TotalEntities = 0
 end
 
 AddEventHandler('onClientResourceStart', function(resourceName)
@@ -472,7 +504,18 @@ exports('removeMap', RemoveMap)
 
 CreateThread(function()
 	while true do
-		Wait(0)
 		CheckMaps()
+		Wait(0)
+	end
+end)
+
+CreateThread(function()
+	while true do
+		if TotalEntities >= Config.MaxEntities then
+			print("Max entity limit (" .. Config.MaxEntities .. ") has been reached. Please reduce the number of entities in your maps.")
+			Wait(60000)
+		else
+			Wait(1000)
+		end
 	end
 end)
