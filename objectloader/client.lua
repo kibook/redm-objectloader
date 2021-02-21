@@ -253,18 +253,34 @@ end
 function ClearMap(map)
 	for object in values(map.Object) do
 		ClearObject(object)
+
+		if TotalEntities > 0 then
+			TotalEntities = TotalEntities - 1
+		end
 	end
 
 	for pickup in values(map.PickupObject) do
 		ClearPickup(pickup)
+
+		if TotalEntities > 0 then
+			TotalEntities = TotalEntities - 1
+		end
 	end
 
 	for ped in values(map.Ped) do
 		ClearPed(ped)
+
+		if TotalEntities > 0 then
+			TotalEntities = TotalEntities - 1
+		end
 	end
 
 	for vehicle in values(map.Vehicle) do
 		ClearVehicle(vehicle)
+
+		if TotalEntities > 0 then
+			TotalEntities = TotalEntities - 1
+		end
 	end
 end
 
@@ -309,10 +325,6 @@ function RemoveMap(name)
 		end
 
 		Maps[name] = nil
-
-		-- FIXME: Should only subtract the # of entities for this map,
-		--        but currently not sure how to track this
-		TotalEntities = 0
 
 		print('Removed map ' .. name)
 	else
@@ -433,53 +445,29 @@ function EnumerateVehicles()
 	return EnumerateEntities(FindFirstVehicle, FindNextVehicle, EndFindVehicle)
 end
 
-function ClearEntities()
-	for ped in EnumeratePeds() do
-		if not NetworkGetEntityIsNetworked(ped) then
-			DeletePed(ped)
-		end
-	end
-
-	for vehicle in EnumerateVehicles() do
-		if not NetworkGetEntityIsNetworked(vehicle) then
-			DeleteVehicle(vehicle)
-		end
-	end
-
-	for object in EnumerateObjects() do
-		if not NetworkGetEntityIsNetworked(object) then
-			DeleteObject(object)
-		end
-	end
-
-	TotalEntities = 0
-end
-
 AddEventHandler('onClientResourceStart', function(resourceName)
-	if GetCurrentResourceName() == resourceName then
-		ClearEntities()
-	else
-		local numMaps = GetNumResourceMetadata(resourceName, 'objectloader_map')
+	local numMaps = GetNumResourceMetadata(resourceName, 'objectloader_map')
 
-		if not numMaps or numMaps < 1 then
-			return
-		end
-
-		local dataList = {}
-
-		for i = 0, numMaps - 1 do
-			local fileName = GetResourceMetadata(resourceName, 'objectloader_map', i)
-			local data = LoadResourceFile(resourceName, fileName)
-			table.insert(dataList, data)
-		end
-
-		AddMaps(resourceName, dataList)
+	if not numMaps or numMaps < 1 then
+		return
 	end
+
+	local dataList = {}
+
+	for i = 0, numMaps - 1 do
+		local fileName = GetResourceMetadata(resourceName, 'objectloader_map', i)
+		local data = LoadResourceFile(resourceName, fileName)
+		table.insert(dataList, data)
+	end
+
+	AddMaps(resourceName, dataList)
 end)
 
 AddEventHandler('onResourceStop', function(resourceName)
 	if GetCurrentResourceName() == resourceName then
-		ClearEntities()
+		for name, map in pairs(Maps) do
+			ClearMap(map)
+		end
 	elseif Maps[resourceName] then
 		RemoveMap(resourceName)
 	end
@@ -493,7 +481,7 @@ function CheckMaps()
 	for name, map in pairs(Maps) do
 		if HasMapFailed(name) then
 			print('Restarting map ' .. name .. '...')
-			ClearEntities()
+			ClearMap(Maps[name])
 			CreateMapThread(name)
 		end
 	end
@@ -516,6 +504,36 @@ CreateThread(function()
 			Wait(60000)
 		else
 			Wait(1000)
+		end
+	end
+end)
+
+local DebugMode = false
+
+function DrawText(text, x, y)
+	SetTextScale(0.35, 0.35)
+	SetTextColor(255, 255, 255, 255)
+	SetTextDropshadow(1, 0, 0, 0, 200)
+	SetTextFontForCurrentCommand(0)
+	DisplayText(CreateVarString(10, "LITERAL_STRING", text), x, y)
+end
+
+RegisterCommand("objectloader_debug", function()
+	DebugMode = not DebugMode
+end)
+
+CreateThread(function()
+	while true do
+		if DebugMode then
+			local totalMaps = 0
+			for name, _ in pairs(Maps) do
+				totalMaps = totalMaps + 1
+			end
+			DrawText("Maps loaded: " .. totalMaps, 0.85, 0.03)
+			DrawText("Entities spawned: " .. TotalEntities, 0.85, 0.06)
+			Wait(0)
+		else
+			Wait(500)
 		end
 	end
 end)
