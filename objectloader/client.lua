@@ -68,6 +68,14 @@ function SpawnObject(object)
 		SetEntityLodDist(object.handle, 0xFFFF)
 	end
 
+	if object.Collision ~= nil then
+		SetEntityCollision(object.handle, object.Collision)
+	end
+
+	if object.Visible ~= nil then
+		SetEntityVisible(object.handle, object.Visible)
+	end
+
 	return true
 end
 
@@ -113,6 +121,14 @@ function SpawnPed(ped)
 	FreezeEntityPosition(ped.handle, true)
 
 	SetEntityRotation(ped.handle, ped.Rotation_x, ped.Rotation_y, ped.Rotation_z, 0, false)
+
+	if ped.Collision ~= nil then
+		SetEntityCollision(ped.handle, ped.Collision)
+	end
+
+	if ped.Visible ~= nil then
+		SetEntityVisible(ped.handle, ped.Visible)
+	end
 
 	if not ped.Preset or ped.Preset == -1 then
 		SetRandomOutfitVariation(ped.handle, true)
@@ -161,6 +177,14 @@ function SpawnVehicle(vehicle)
 	FreezeEntityPosition(vehicle.handle, true)
 
 	SetEntityRotation(vehicle.handle, vehicle.Rotation_x, vehicle.Rotation_y, vehicle.Rotation_z, 0, false)
+
+	if vehicle.Collision ~= nil then
+		SetEntityCollision(vehicle.handle, vehicle.Collision)
+	end
+
+	if vehicle.Visible ~= nil then
+		SetEntityVisible(vehicle.handle, vehicle.Visible)
+	end
 
 	return true
 end
@@ -356,7 +380,8 @@ local AttributeTypes = {
 	['Rotation_x'] = ToFloat,
 	['Rotation_y'] = ToFloat,
 	['Rotation_z'] = ToFloat,
-	['TextureVariation'] = ToNumber
+	['TextureVariation'] = ToNumber,
+	['Visible'] = ToBoolean
 }
 
 function ProcessValue(name, value)
