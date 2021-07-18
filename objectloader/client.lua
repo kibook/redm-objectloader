@@ -324,7 +324,23 @@ function CreateMapThread(name)
 	end)
 end
 
-function InitMap(name, map)
+local function enableMap(name)
+	if Maps[name] and not Maps[name].enabled then
+		CreateMapThread(name)
+	end
+end
+
+local function disableMap(name)
+	if Maps[name] and Maps[name].enabled then
+		Maps[name].enabled = false
+
+		while Maps[name] and not Maps[name].unloaded do
+			Citizen.Wait(0)
+		end
+	end
+end
+
+function InitMap(name, map, enabled)
 	if Maps[name] then
 		RemoveMap(name)
 	end
@@ -337,15 +353,15 @@ function InitMap(name, map)
 		print('Added map ' .. name)
 	end
 
-	CreateMapThread(name)
+	if enabled then
+		enableMap(name)
+	end
 end
 
 function RemoveMap(name)
 	if Maps[name] then
-		Maps[name].enabled = false
-
-		while Maps[name] and not Maps[name].unloaded do
-			Wait(0)
+		if Maps[name].enabled then
+			disableMap(name)
 		end
 
 		Maps[name] = nil
@@ -402,7 +418,7 @@ function ProcessNode(node)
 	return entity
 end
 
-function AddMaps(name, dataList)
+function AddMaps(name, dataList, enabled)
 	local map = {}
 
 	for _, data in ipairs(dataList) do
@@ -418,11 +434,11 @@ function AddMaps(name, dataList)
 		end
 	end
 
-	InitMap(name, map)
+	InitMap(name, map, enabled)
 end
 
-function AddMap(name, data)
-	AddMaps(name, {data})
+function AddMap(name, data, enabled)
+	AddMaps(name, {data}, enabled)
 end
 
 local entityEnumerator = {
@@ -485,7 +501,9 @@ AddEventHandler('onClientResourceStart', function(resourceName)
 		table.insert(dataList, data)
 	end
 
-	AddMaps(resourceName, dataList)
+	local enabled = GetResourceMetadata(resourceName, 'objectloader_enabled', 0)
+
+	AddMaps(resourceName, dataList, enabled ~= "no")
 end)
 
 AddEventHandler('onResourceStop', function(resourceName)
@@ -504,7 +522,7 @@ end
 
 function CheckMaps()
 	for name, map in pairs(Maps) do
-		if HasMapFailed(name) then
+		if map.enabled and HasMapFailed(name) then
 			print('Restarting map ' .. name .. '...')
 			ClearMap(Maps[name])
 			CreateMapThread(name)
@@ -514,6 +532,8 @@ end
 
 exports('addMap', AddMap)
 exports('removeMap', RemoveMap)
+exports('enableMap', enableMap)
+exports('disableMap', disableMap)
 
 CreateThread(function()
 	while true do
