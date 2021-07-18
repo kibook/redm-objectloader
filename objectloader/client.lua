@@ -347,10 +347,26 @@ function InitMap(name, map, enabled)
 
 	Maps[name] = map
 
-	if map.MapMeta and map.MapMeta[1].Creator then
-		print('Added map ' .. name .. ' by ' .. map.MapMeta[1].Creator)
+	local uniqueCreators = {}
+
+	if map.MapMeta then
+		for _, meta in ipairs(map.MapMeta) do
+			if meta.Creator then
+				uniqueCreators[meta.Creator] = true
+			end
+		end
+	end
+
+	local creators = {}
+
+	for creator, _ in pairs(uniqueCreators) do
+		table.insert(creators, creator)
+	end
+
+	if #creators > 0 then
+		print("Added map " .. name .. " by " .. table.concat(creators, ", "))
 	else
-		print('Added map ' .. name)
+		print("Added map " .. name)
 	end
 
 	if enabled then
